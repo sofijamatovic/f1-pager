@@ -1,48 +1,67 @@
 """
-Live Telemetry Engine Test Script.
-Loads a historical FastF1 session, streams laps via the strategy simulator,
-and logs actionable competitor strategy alerts.
+Live Telemetry Engine Test Script (Dynamic Anomaly Detection).
+Loads a historical FastF1 session, streams laps strictly monotonically by LapNumber via
+the strategy simulator, and logs actionable competitor strategy alerts.
 """
 
+from pathlib import Path
 import fastf1
+import pandas as pd
 from strategy_engine import (
     CompetitorObserver,
     EventDispatcher,
     LiveTelemetrySimulator,
     StrategyConfig,
 )
-import os
-from pathlib import Path
-
-# Create cache directory if it does not exist
-cache_dir = Path("cache")
-cache_dir.mkdir(parents=True, exist_ok=True)
-
-# Enable FastF1 cache using the modern API
-fastf1.Cache.enable_cache(str(cache_dir))
 
 
 def run_historical_test() -> None:
-  
+    # Ensure cache directory exists and enable FastF1 cache
+    cache_dir = Path("cache")
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    fastf1.Cache.enable_cache(str(cache_dir))
 
     print("[INFO] Fetching race telemetry session...")
     # Load 2024 British Grand Prix Race data
-    session = fastf1.get_session(2024, "Silverstone", "R")
+    session = fastf1.get_session(2024, "Monaco", "R")
     session.load()
 
-    print("[INFO] Initialising Live Telemetry Simulator (Speed Multiplier: 100x)...")
-    # Speed multiplier set to 100x for fast simulation
-    simulator = LiveTelemetrySimulator(session.laps, speed_multiplier=100.0)
+    print("[INFO] Enforcing strict monotonic LapNumber sequence for engine processing...")
+    # Drop invalid lap numbers and convert LapNumber to integer
+    clean_laps = session.laps.dropna(subset=["LapNumber"]).copy()
+    clean_laps["LapNumber"] = clean_laps["LapNumber"].astype(int)
 
-    # Custom strategy configuration for alert thresholds
+    # FastF1 race classification is session-level rather than lap-level.
+    # Attach a retirement status only to the driver's final recorded lap so
+    # the observer can exercise its one-shot DNF path without flagging every
+    # earlier lap from a retired driver's stint.
+    if {"Abbreviation", "Status"}.issubset(session.results.columns):
+        retirement_terms = ("accident", "collision", "engine", "power unit", "hydraulics", "retired")
+        retired = session.results.loc[
+            session.results["Status"].fillna("").str.casefold().str.contains("|".join(retirement_terms)),
+            ["Abbreviation", "Status"],
+        ].set_index("Abbreviation")["Status"]
+        final_lap = clean_laps.groupby("Driver")["LapNumber"].transform("max")
+        clean_laps["Status"] = clean_laps["Driver"].map(retired).where(clean_laps["LapNumber"] == final_lap)
+
+    # Sort primarily by LapNumber so that no lap N appears after lap N+1
+    sorted_laps = clean_laps.sort_values(
+        by=["LapNumber", "Time"], ascending=[True, True]
+    ).reset_index(drop=True)
+
+    print("[INFO] Initialising Live Telemetry Simulator (Speed Multiplier: 100x)...")
+    simulator = LiveTelemetrySimulator(sorted_laps, speed_multiplier=100.0)
+
+    # Dynamic field-relative anomaly detection configuration
     config = StrategyConfig(
-    rolling_window=4,                   # Povećavamo prozor analize sa 3 na 4 kruga za stabilniji prosek
-    baseline_laps=4,                    # Veći baseline sprečava lažne uzbune na početku stinta
-    pace_shift_threshold=0.35,          # Reaguje tek na ozbiljan pad/skok tempa (> 0.35s)
-    expected_degradation_slope=0.12,    # Reaguje samo na visoku degradaciju (> 0.12s po krugu)
-    pit_drop_threshold=0.50,            # Boks prozor se otvara tek pri padu od pola sekunde
-    min_laps_for_degradation=5          # Zahteva bar 5 krugova u stint-u za procenu degradacije
-)
+        rolling_window=5,
+        baseline_laps=5,
+        zscore_threshold=2.6,
+        min_relative_delta=0.35,
+        tyre_cliff_acceleration=0.08,
+        undercut_loss_threshold=2.0,
+        min_compound_peers=3,
+    )
 
     observer = CompetitorObserver(config)
     dispatcher = EventDispatcher()
@@ -51,7 +70,13 @@ def run_historical_test() -> None:
 
     event_count = 0
     for lap in simulator.stream():
-        events = observer.process_lap(lap)
+        # Handle single Series or DataFrame row yield
+        if isinstance(lap, pd.DataFrame):
+            lap_data = lap.iloc[0]
+        else:
+            lap_data = lap
+
+        events = observer.process_lap(lap_data)
         for event in events:
             event_count += 1
             dispatcher.log_event(event)
@@ -64,10 +89,15 @@ def run_historical_test() -> None:
                 print(f"│{line:<16}│")
             print("└────────────────┘\n")
 
+    # Flush any remaining end-of-race events
+    for event in observer.flush():
+        event_count += 1
+        dispatcher.log_event(event)
+
     # Generate the Markdown post-race summary report
     output_report = dispatcher.generate_markdown_summary("silverstone_2024_summary.md")
-    print(f"--- SIMULATION COMPLETE ---")
-    print(f"Total strategic events detected: {event_count}")
+    print("--- SIMULATION COMPLETE ---")
+    print(f"Total field-relative strategic events detected: {event_count}")
     print(f"Post-race report generated: {output_report.resolve()}")
 
 

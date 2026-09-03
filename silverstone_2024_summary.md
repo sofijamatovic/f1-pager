@@ -1,341 +1,286 @@
 # Pitwall Pager: Post-Race Strategy Summary
 
-**Events logged:** 75
+**Events logged:** 87
 
 ## ALB
 
-### High Degradation
+### High Deg
 
-- Lap 19: +0.248s — stint degradation above baseline
+- Lap 31: +0.416s — tyre degradation accelerated versus compound peers
+- Lap 46: +0.660s — tyre degradation accelerated versus compound peers
+- Lap 63: +0.917s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 18: +0.917s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 14: -0.440s — rolling pace improved
+- Lap 29: +1.162s — statistically significant field-relative pace loss
+- Lap 36: +2.638s — statistically significant field-relative pace loss
+- Lap 45: +1.778s — statistically significant field-relative pace loss
 
 ### Pit Window
 
-- Lap 19: +40.251s — projected degradation exceeds pit-loss trade-off
+- Lap 17: +2.506s — cumulative field-relative loss reached undercut threshold
 
 ## ALO
 
-### High Degradation
+### High Deg
 
-- Lap 19: +0.310s — stint degradation above baseline
+- Lap 26: +0.208s — tyre degradation accelerated versus compound peers
+- Lap 29: +0.299s — tyre degradation accelerated versus compound peers
+- Lap 42: +0.789s — tyre degradation accelerated versus compound peers
+- Lap 74: +0.445s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 18: +0.731s — rolling pace deteriorated
+- Lap 41: +2.705s — statistically significant field-relative pace loss
+- Lap 51: +2.327s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 7: -0.379s — rolling pace improved
+- Lap 43: -2.865s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 19: +48.933s — projected degradation exceeds pit-loss trade-off
+- Lap 14: +2.565s — cumulative field-relative loss reached undercut threshold
 
 ## BOT
 
-### High Degradation
+### High Deg
 
-- Lap 19: +0.196s — stint degradation above baseline
+- Lap 21: +1.099s — tyre degradation accelerated versus compound peers
+- Lap 39: +0.421s — tyre degradation accelerated versus compound peers
+- Lap 56: +1.118s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 19: +1.402s — rolling pace deteriorated
+- Lap 39: +2.275s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 7: -0.677s — rolling pace improved
+- Lap 41: -3.347s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 19: +29.727s — projected degradation exceeds pit-loss trade-off
+- Lap 14: +2.114s — cumulative field-relative loss reached undercut threshold
+- Lap 20: +2.575s — cumulative field-relative loss reached undercut threshold
+
+## GAS
+
+### High Deg
+
+- Lap 18: +0.341s — tyre degradation accelerated versus compound peers
+- Lap 50: +0.216s — tyre degradation accelerated versus compound peers
+
+### Pace Drop
+
+- Lap 51: +4.475s — statistically significant field-relative pace loss
+- Lap 59: +2.654s — statistically significant field-relative pace loss
+
+### Pit Window
+
+- Lap 15: +2.657s — cumulative field-relative loss reached undercut threshold
 
 ## HAM
 
-### High Degradation
+### Pace Gain
 
-- Lap 19: +0.292s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 18: +1.129s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 42: -1.479s — rolling pace improved
+- Lap 30: -1.817s — statistically significant field-relative pace gain
+- Lap 37: -2.168s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 18: +20.337s — projected degradation exceeds pit-loss trade-off
+- Lap 18: +2.590s — cumulative field-relative loss reached undercut threshold
+- Lap 57: +3.905s — cumulative field-relative loss reached undercut threshold
 
 ## HUL
 
-### High Degradation
+### Dnf
 
-- Lap 19: +0.317s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 18: +1.634s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 43: -1.787s — rolling pace improved
-
-### Pit Window
-
-- Lap 18: +26.928s — projected degradation exceeds pit-loss trade-off
+- Lap 1: +0.000s — driver retired from the race
 
 ## LEC
 
-### High Degradation
+### High Deg
 
-- Lap 21: +0.261s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 18: +1.401s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 12: -0.364s — rolling pace improved
+- Lap 25: +0.166s — tyre degradation accelerated versus compound peers
+- Lap 78: +0.379s — tyre degradation accelerated versus compound peers
 
 ### Pit Window
 
-- Lap 18: +23.604s — projected degradation exceeds pit-loss trade-off
+- Lap 11: +2.346s — cumulative field-relative loss reached undercut threshold
 
 ## MAG
 
-### High Degradation
+### Dnf
 
-- Lap 19: +0.195s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 18: +0.889s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 11: -0.457s — rolling pace improved
-
-### Pit Window
-
-- Lap 19: +30.973s — projected degradation exceeds pit-loss trade-off
+- Lap 1: +0.000s — driver retired from the race
 
 ## NOR
 
-### High Degradation
+### Pace Gain
 
-- Lap 19: +0.209s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 18: +0.924s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 14: -0.388s — rolling pace improved
+- Lap 62: -1.089s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 19: +40.559s — projected degradation exceeds pit-loss trade-off
+- Lap 17: +2.910s — cumulative field-relative loss reached undercut threshold
 
 ## OCO
 
-### High Degradation
+### Dnf
 
-- Lap 7: +0.200s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 9: +0.446s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 42: -1.385s — rolling pace improved
-
-### Pit Window
-
-- Lap 15: +22.339s — projected degradation exceeds pit-loss trade-off
+- Lap 1: +0.000s — driver retired from the race
 
 ## PER
 
-### High Degradation
+### Dnf
 
-- Lap 21: +0.254s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 9: +0.602s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 42: -0.749s — rolling pace improved
-
-### Pit Window
-
-- Lap 18: +32.520s — projected degradation exceeds pit-loss trade-off
+- Lap 1: +0.000s — driver retired from the race
 
 ## PIA
 
-### High Degradation
+### Pace Gain
 
-- Lap 19: +0.206s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 18: +1.130s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 23: -0.429s — rolling pace improved
+- Lap 61: -1.296s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 19: +40.049s — projected degradation exceeds pit-loss trade-off
+- Lap 10: +2.107s — cumulative field-relative loss reached undercut threshold
 
 ## RIC
 
-### High Degradation
-
-- Lap 19: +0.292s — stint degradation above baseline
-
 ### Pace Drop
 
-- Lap 17: +0.458s — rolling pace deteriorated
+- Lap 41: +4.362s — statistically significant field-relative pace loss
+- Lap 45: +3.471s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 10: -0.489s — rolling pace improved
+- Lap 30: -1.612s — statistically significant field-relative pace gain
+- Lap 42: -3.904s — statistically significant field-relative pace gain
+- Lap 46: -4.172s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 18: +29.072s — projected degradation exceeds pit-loss trade-off
+- Lap 14: +2.530s — cumulative field-relative loss reached undercut threshold
 
 ## RUS
 
-### High Degradation
-
-- Lap 18: +0.152s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 18: +1.687s — rolling pace deteriorated
-
 ### Pit Window
 
-- Lap 18: +30.268s — projected degradation exceeds pit-loss trade-off
+- Lap 14: +2.156s — cumulative field-relative loss reached undercut threshold
 
 ## SAI
 
-### High Degradation
+### High Deg
 
-- Lap 19: +0.207s — stint degradation above baseline
+- Lap 10: +0.190s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 9: +0.355s — rolling pace deteriorated
+- Lap 31: +2.710s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 43: -1.900s — rolling pace improved
+- Lap 30: -2.619s — statistically significant field-relative pace gain
+- Lap 60: -1.857s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 18: +20.379s — projected degradation exceeds pit-loss trade-off
+- Lap 10: +2.313s — cumulative field-relative loss reached undercut threshold
 
 ## SAR
 
-### High Degradation
+### High Deg
 
-- Lap 19: +0.241s — stint degradation above baseline
+- Lap 65: +1.197s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 18: +1.072s — rolling pace deteriorated
+- Lap 41: +2.612s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 14: -0.406s — rolling pace improved
+- Lap 30: -1.742s — statistically significant field-relative pace gain
+- Lap 42: -2.721s — statistically significant field-relative pace gain
+- Lap 50: -3.370s — statistically significant field-relative pace gain
+- Lap 69: -3.661s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 19: +38.086s — projected degradation exceeds pit-loss trade-off
+- Lap 13: +2.005s — cumulative field-relative loss reached undercut threshold
+- Lap 64: +2.784s — cumulative field-relative loss reached undercut threshold
 
 ## STR
 
-### High Degradation
+### High Deg
 
-- Lap 18: +0.120s — stint degradation above baseline
+- Lap 24: +0.815s — tyre degradation accelerated versus compound peers
+- Lap 31: +0.612s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 18: +1.707s — rolling pace deteriorated
+- Lap 17: +1.023s — statistically significant field-relative pace loss
+- Lap 22: +1.784s — statistically significant field-relative pace loss
+- Lap 73: +2.990s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 12: -0.368s — rolling pace improved
+- Lap 74: -2.710s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 18: +28.432s — projected degradation exceeds pit-loss trade-off
+- Lap 17: +2.920s — cumulative field-relative loss reached undercut threshold
+- Lap 62: +2.709s — cumulative field-relative loss reached undercut threshold
 
 ## TSU
 
-### High Degradation
+### High Deg
 
-- Lap 19: +0.265s — stint degradation above baseline
+- Lap 54: +1.311s — tyre degradation accelerated versus compound peers
+- Lap 63: +0.951s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 18: +0.861s — rolling pace deteriorated
+- Lap 14: +1.215s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 7: -0.398s — rolling pace improved
+- Lap 15: -1.170s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 19: +40.898s — projected degradation exceeds pit-loss trade-off
+- Lap 14: +2.011s — cumulative field-relative loss reached undercut threshold
 
 ## VER
 
-### High Degradation
+### High Deg
 
-- Lap 18: +0.152s — stint degradation above baseline
-
-### Pace Drop
-
-- Lap 17: +0.521s — rolling pace deteriorated
-
-### Pace Increase
-
-- Lap 42: -2.026s — rolling pace improved
+- Lap 64: +0.476s — tyre degradation accelerated versus compound peers
 
 ### Pit Window
 
-- Lap 18: +34.966s — projected degradation exceeds pit-loss trade-off
+- Lap 11: +2.068s — cumulative field-relative loss reached undercut threshold
+- Lap 57: +2.172s — cumulative field-relative loss reached undercut threshold
 
 ## ZHO
 
-### High Degradation
+### High Deg
 
-- Lap 7: +0.163s — stint degradation above baseline
+- Lap 40: +0.786s — tyre degradation accelerated versus compound peers
+- Lap 68: +1.277s — tyre degradation accelerated versus compound peers
 
 ### Pace Drop
 
-- Lap 8: +0.770s — rolling pace deteriorated
+- Lap 40: +3.818s — statistically significant field-relative pace loss
+- Lap 48: +2.851s — statistically significant field-relative pace loss
+- Lap 68: +4.865s — statistically significant field-relative pace loss
 
-### Pace Increase
+### Pace Gain
 
-- Lap 41: -0.446s — rolling pace improved
+- Lap 41: -3.828s — statistically significant field-relative pace gain
+- Lap 69: -4.467s — statistically significant field-relative pace gain
 
 ### Pit Window
 
-- Lap 8: +34.916s — projected degradation exceeds pit-loss trade-off
+- Lap 13: +2.003s — cumulative field-relative loss reached undercut threshold
+- Lap 74: +5.008s — cumulative field-relative loss reached undercut threshold
