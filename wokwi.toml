@@ -2,3 +2,4 @@
 version = 1
 firmware = 'sketch.ino'
 elf = 'sketch.ino'
+rfc2217ServerPort = 4000
