@@ -1,5 +1,5 @@
 [wokwi]
 version = 1
-firmware = 'sketch.ino'
-elf = 'sketch.ino'
+firmware = 'build/sketch.ino.hex'
+elf = 'build/sketch.ino.elf'
 rfc2217ServerPort = 4000

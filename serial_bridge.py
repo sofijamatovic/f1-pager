@@ -35,7 +35,7 @@ LOGGER = logging.getLogger(__name__)
 
 _STOP = object()
 
-SERIAL_PORT = "rfc2217://localhost:4000"
+SERIAL_PORT = "rfc2217://localhost:4000?timeout=10"
 BAUD_RATE = 115200
 
 

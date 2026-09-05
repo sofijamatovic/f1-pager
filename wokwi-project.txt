@@ -1,9 +1,0 @@
-LiquidCrystal I2C
-[wokwi]
-version = 1
-firmware = 'sketch.ino'
-elf = 'sketch.ino'
-
-[net]
-gdb = 0
-serial = 4000
