@@ -35,7 +35,9 @@ LOGGER = logging.getLogger(__name__)
 
 _STOP = object()
 
-SERIAL_PORT = "rfc2217://localhost:4000?timeout=10"
+# Real hardware port. Change "COM3" to whatever port your Arduino
+# actually enumerates as (find it with: arduino-cli board list).
+SERIAL_PORT = "COM3"
 BAUD_RATE = 115200
 
 
@@ -155,7 +157,7 @@ class SerialPagerBridge:
 
     def connect(self) -> None:
         """
-        Connect to Wokwi using RFC2217.
+        Connect to the Arduino over a real serial port.
         Falls back to MockSerial if unavailable.
         """
 
