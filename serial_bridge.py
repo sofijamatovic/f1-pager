@@ -1,4 +1,14 @@
-"""Thread-safe outbound serial transport for the Pitwall Pager Arduino Uno."""
+"""
+Serial bridge between the Python F1 strategy engine and the Arduino/Wokwi pager.
+
+Protocol sent to Arduino:
+
+    TYPE|LINE1|LINE2\n
+
+Example:
+
+    HIGH_DEG|VER: HIGH DEG|+0.15s/lap L16
+"""
 
 from __future__ import annotations
 
@@ -22,9 +32,9 @@ from strategy_engine import (
 
 LOGGER = logging.getLogger(__name__)
 
+
 _STOP = object()
 
-# Wokwi RFC2217 connection.
 SERIAL_PORT = "rfc2217://localhost:4000"
 BAUD_RATE = 115200
 
@@ -41,29 +51,43 @@ class _WritableSerial(Protocol):
 
 @dataclass(slots=True)
 class MockSerial:
-    """Console-backed serial replacement used when hardware is unavailable."""
+    """
+    Console fallback when Wokwi/Arduino is unavailable.
+    """
 
     port: str
     is_open: bool = True
 
     def write(self, data: bytes) -> int:
-        packet = data.decode("ascii", errors="replace").rstrip("\n")
+        packet = data.decode(
+            "ascii",
+            errors="replace",
+        ).rstrip("\n")
 
-        # Expected:
-        # TYPE|LINE1|LINE2
         parts = packet.split("|", 2)
 
         if len(parts) == 3:
-            _, line1, line2 = parts
+            event_type, line1, line2 = parts
+
+            print()
+            print(
+                f"[{event_type}]"
+            )
+
         elif len(parts) == 2:
             line1, line2 = parts
+
         else:
             line1 = packet
             line2 = ""
 
         print("+----------------+")
-        print(f"|{line1[:16]:<16}|")
-        print(f"|{line2[:16]:<16}|")
+        print(
+            f"|{line1[:16]:<16}|"
+        )
+        print(
+            f"|{line2[:16]:<16}|"
+        )
         print("+----------------+")
 
         return len(data)
@@ -74,17 +98,14 @@ class MockSerial:
 
 class SerialPagerBridge:
     """
-    Queue LCD notifications so telemetry analysis never waits for I/O.
+    Queued, non-blocking serial output for the F1 pager.
 
-    Arduino protocol:
-
+    Python:
         TYPE|LINE1|LINE2\\n
 
-    Examples:
-
-        DNF|VER: DNF|RETIRED L29
-        HIGH_DEG|VER: HIGH DEG|+0.12s/lap L18
-        PIT_WINDOW|VER: PIT WINDOW|BOX THIS LAP
+    Arduino:
+        parses the three fields and displays them
+        on the 16x2 LCD.
     """
 
     def __init__(
@@ -92,23 +113,30 @@ class SerialPagerBridge:
         port: str = SERIAL_PORT,
         baud_rate: int = BAUD_RATE,
         auto_connect: bool = True,
-        display_duration: float = 2.5,
+        display_duration: float = 0.0,
     ) -> None:
+
         if baud_rate <= 0:
-            raise ValueError("baud_rate must be positive")
+            raise ValueError(
+                "baud_rate must be positive"
+            )
 
         if display_duration < 0:
-            raise ValueError("display_duration must be non-negative")
+            raise ValueError(
+                "display_duration cannot be negative"
+            )
 
         self.port = port
         self.baud_rate = baud_rate
         self.display_duration = display_duration
 
         self._messages: queue.Queue[str | object] = queue.Queue()
+
         self._serial: _WritableSerial | None = None
         self._worker: threading.Thread | None = None
 
         self._closed = False
+
         self._state_lock = threading.RLock()
 
         self.mock_mode = False
@@ -116,27 +144,35 @@ class SerialPagerBridge:
         if auto_connect:
             self.connect()
 
+
     @property
     def connected(self) -> bool:
-        return self._serial is not None and self._serial.is_open
+        return (
+            self._serial is not None
+            and self._serial.is_open
+        )
+
 
     def connect(self) -> None:
-        """Open the serial port, falling back to mock transport on failure."""
+        """
+        Connect to Wokwi using RFC2217.
+        Falls back to MockSerial if unavailable.
+        """
 
         with self._state_lock:
 
             if self._closed:
                 raise RuntimeError(
-                    "cannot connect a closed SerialPagerBridge"
+                    "Cannot connect a closed bridge."
                 )
 
             if self._worker is not None:
                 return
 
             try:
+
                 import serial
 
-                # For Wokwi use the RFC2217 URL.
                 self._serial = serial.serial_for_url(
                     self.port,
                     baudrate=self.baud_rate,
@@ -146,19 +182,25 @@ class SerialPagerBridge:
                 self.mock_mode = False
 
                 LOGGER.info(
-                    "Connected to Pitwall Pager on %s at %d baud",
+                    "Connected to Pitwall Pager on %s "
+                    "at %d baud",
                     self.port,
                     self.baud_rate,
                 )
 
             except Exception as exc:
+
                 LOGGER.warning(
-                    "Serial unavailable on %s (%s); using LCD mock mode",
+                    "Serial unavailable on %s (%s); "
+                    "using LCD mock mode",
                     self.port,
                     exc,
                 )
 
-                self._serial = MockSerial(self.port)
+                self._serial = MockSerial(
+                    self.port
+                )
+
                 self.mock_mode = True
 
             self._worker = threading.Thread(
@@ -169,42 +211,77 @@ class SerialPagerBridge:
 
             self._worker.start()
 
+
     @staticmethod
-    def packet_from_event(event_dict: Mapping[str, Any]) -> str:
+    def packet_from_event(
+        event_dict: Mapping[str, Any]
+    ) -> str:
         """
-        Convert a strategy event into the Arduino serial protocol.
+        Convert a strategy event to:
 
-        Final format:
-
-            EVENT_TYPE|LINE1|LINE2\\n
+            TYPE|LINE1|LINE2\\n
         """
 
-        lcd_text = EventDispatcher.format_for_pager(event_dict)
+        lcd_text = (
+            EventDispatcher
+            .format_for_pager(event_dict)
+        )
 
-        line_one, line_two = lcd_text.split("\n", maxsplit=1)
+        lines = lcd_text.split(
+            "\n",
+            maxsplit=1,
+        )
 
-        event_type = str(event_dict["event_type"])
+        if len(lines) != 2:
+            raise ValueError(
+                "Pager formatter must return "
+                "exactly two LCD lines."
+            )
 
-        # Arduino expects:
-        # TYPE|LINE1|LINE2
-        return f"{event_type}|{line_one}|{line_two}\n"
+        line_one, line_two = lines
 
-    def send_event(self, event_dict: Mapping[str, Any]) -> None:
-        """Send a strategy event to the pager."""
+        event_type = str(
+            event_dict["event_type"]
+        )
 
-        self.send_packet(self.packet_from_event(event_dict))
+        return (
+            f"{event_type}|"
+            f"{line_one[:16]}|"
+            f"{line_two[:16]}\n"
+        )
 
-    def send_packet(self, packet: str) -> None:
-        """Enqueue a preformatted packet without blocking telemetry."""
+
+    def send_event(
+        self,
+        event_dict: Mapping[str, Any],
+    ) -> None:
+        """
+        Send a strategy event.
+        """
+
+        self.send_packet(
+            self.packet_from_event(
+                event_dict
+            )
+        )
+
+
+    def send_packet(
+        self,
+        packet: str,
+    ) -> None:
+        """
+        Queue a raw serial packet.
+        """
 
         if not packet.endswith("\n"):
-            packet = f"{packet}\n"
+            packet = packet + "\n"
 
         with self._state_lock:
 
             if self._closed:
                 raise RuntimeError(
-                    "cannot send through a closed SerialPagerBridge"
+                    "Cannot send through a closed bridge."
                 )
 
             if self._worker is None:
@@ -212,13 +289,19 @@ class SerialPagerBridge:
 
         self._messages.put(packet)
 
+
     def flush(self) -> None:
-        """Wait until all queued messages have been written."""
+        """
+        Wait until every queued packet has been transmitted.
+        """
 
         self._messages.join()
 
+
     def close(self) -> None:
-        """Drain messages, stop worker and close the serial port."""
+        """
+        Drain the queue and close the serial connection.
+        """
 
         with self._state_lock:
 
@@ -226,19 +309,16 @@ class SerialPagerBridge:
                 return
 
             self._closed = True
+
             worker = self._worker
 
         self._messages.join()
 
         if worker is not None:
+
             self._messages.put(_STOP)
 
-            worker.join(
-                timeout=max(
-                    2.0,
-                    self.display_duration + 1.0,
-                )
-            )
+            worker.join(timeout=3.0)
 
         if self._serial is not None:
 
@@ -246,17 +326,23 @@ class SerialPagerBridge:
                 self._serial.close()
 
             except Exception as exc:
+
                 LOGGER.warning(
                     "Could not close serial port %s: %s",
                     self.port,
                     exc,
                 )
 
-    def __enter__(self) -> SerialPagerBridge:
+
+    def __enter__(
+        self,
+    ) -> "SerialPagerBridge":
+
         if self._worker is None:
             self.connect()
 
         return self
+
 
     def __exit__(
         self,
@@ -264,10 +350,14 @@ class SerialPagerBridge:
         exc_value: object,
         traceback: object,
     ) -> None:
+
         self.close()
 
+
     def _transmit_loop(self) -> None:
-        """Background worker responsible for serial transmission."""
+        """
+        Background thread which performs serial writes.
+        """
 
         while True:
 
@@ -278,11 +368,14 @@ class SerialPagerBridge:
                 if item is _STOP:
                     return
 
-                assert isinstance(item, str)
+                assert isinstance(
+                    item,
+                    str,
+                )
 
                 if self._serial is None:
                     raise RuntimeError(
-                        "serial transport was not initialised"
+                        "Serial transport not initialized."
                     )
 
                 self._serial.write(
@@ -292,8 +385,10 @@ class SerialPagerBridge:
                     )
                 )
 
-                if self.display_duration:
-                    sleep(self.display_duration)
+                if self.display_duration > 0:
+                    sleep(
+                        self.display_duration
+                    )
 
             except Exception as exc:
 
@@ -303,6 +398,7 @@ class SerialPagerBridge:
                 )
 
             finally:
+
                 self._messages.task_done()
 
 
@@ -310,10 +406,12 @@ def _integration_laps() -> pd.DataFrame:
     """
     Generate deterministic replay telemetry.
 
-    56 green laps:
-    - four-car field
-    - one VER pit stop
-    - two genuine tyre degradation events
+    Produces a small synthetic four-driver field
+    containing:
+
+    - VER pit stop
+    - tyre degradation events
+    - pit-window events
     """
 
     records: list[dict[str, object]] = []
@@ -327,47 +425,76 @@ def _integration_laps() -> pd.DataFrame:
 
     for lap in range(1, 57):
 
-        stint_lap = lap - 1 if lap < 29 else lap - 29
+        stint_lap = (
+            lap - 1
+            if lap < 29
+            else lap - 29
+        )
 
         for driver, offset in offsets.items():
 
-            tyre_fade = stint_lap * 0.025
-
-            # VER loses additional pace before the pit stop.
-            cliff = (
-                0.15 * max(0, lap - 12)
-                if driver == "VER" and lap < 29
-                else 0.0
+            tyre_fade = (
+                stint_lap * 0.025
             )
 
-            # VER loses pace again late in the second stint.
-            cliff += (
-                0.15 * max(0, lap - 40)
-                if driver == "VER" and lap > 29
-                else 0.0
-            )
+            cliff = 0.0
 
-            pit_in = (
-                pd.Timedelta(seconds=1)
-                if driver == "VER" and lap == 29
-                else pd.NaT
-            )
+            if (
+                driver == "VER"
+                and lap < 29
+                and lap > 12
+            ):
+                cliff = (
+                    0.15
+                    * (lap - 12)
+                )
+
+            if (
+                driver == "VER"
+                and lap > 40
+            ):
+                cliff += (
+                    0.15
+                    * (lap - 40)
+                )
+
+            pit_in = pd.NaT
+
+            if (
+                driver == "VER"
+                and lap == 29
+            ):
+                pit_in = pd.Timedelta(
+                    seconds=1
+                )
 
             records.append(
                 {
                     "Driver": driver,
+
                     "LapNumber": lap,
+
                     "LapTime": pd.Timedelta(
-                        seconds=90
-                        + offset
-                        + tyre_fade
-                        + cliff
+                        seconds=(
+                            90
+                            + offset
+                            + tyre_fade
+                            + cliff
+                        )
                     ),
-                    "LapStartTime": pd.Timedelta(
-                        seconds=(lap - 1) * 90
-                    ),
+
+                    "LapStartTime":
+                        pd.Timedelta(
+                            seconds=(
+                                (lap - 1)
+                                * 90
+                            )
+                        ),
+
                     "IsAccurate": True,
+
                     "Compound": "MEDIUM",
+
                     "PitInTime": pit_in,
                 }
             )
@@ -375,7 +502,7 @@ def _integration_laps() -> pd.DataFrame:
     return pd.DataFrame(records)
 
 
-if __name__ == "__main__":
+def main() -> None:
 
     logging.basicConfig(
         level=logging.INFO,
@@ -397,11 +524,6 @@ if __name__ == "__main__":
 
     dispatcher = EventDispatcher()
 
-    # Wokwi:
-    #   rfc2217://localhost:4000
-    #
-    # display_duration=0.0 means the Python replay does not
-    # artificially wait between events.
     with SerialPagerBridge(
         port=SERIAL_PORT,
         baud_rate=BAUD_RATE,
@@ -410,19 +532,37 @@ if __name__ == "__main__":
 
         for lap in simulator.stream():
 
-            for event in observer.process_lap(lap):
+            for event in observer.process_lap(
+                lap
+            ):
 
-                dispatcher.log_event(event)
-                bridge.send_event(event)
+                dispatcher.log_event(
+                    event
+                )
+
+                bridge.send_event(
+                    event
+                )
 
         for event in observer.flush():
 
-            dispatcher.log_event(event)
-            bridge.send_event(event)
+            dispatcher.log_event(
+                event
+            )
+
+            bridge.send_event(
+                event
+            )
 
         bridge.flush()
 
+    print()
     print(
-    "Integration replay produced "
-    f"{len(dispatcher.events)} debounced alerts."
-)
+        "Integration replay produced "
+        f"{len(dispatcher.events)} "
+        "debounced alerts."
+    )
+
+
+if __name__ == "__main__":
+    main()

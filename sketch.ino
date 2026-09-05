@@ -1,144 +1,245 @@
 #include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 
-#define LCD_ADDR 0x27
+#define LCD_ADDRESS 0x27
+#define LCD_COLUMNS 16
+#define LCD_ROWS 2
+
 #define BUZZER_PIN 8
 
-// PCF8574 -> LCD mapping used by Wokwi:
-// P0 = RS
-// P1 = RW
-// P2 = E
-// P3 = Backlight
-// P4 = D4
-// P5 = D5
-// P6 = D6
-// P7 = D7
+#define DISPLAY_HOLD_MS 3500
+#define QUEUE_SIZE 5
 
-byte backlight = 0x08;
+LiquidCrystal_I2C lcd(LCD_ADDRESS, LCD_COLUMNS, LCD_ROWS);
 
-void pcfWrite(byte value) {
-  Wire.beginTransmission(LCD_ADDR);
-  Wire.write(value | backlight);
-  Wire.endTransmission();
-}
+struct PagerAlert {
+  char type[16];
+  char line1[17];
+  char line2[17];
+};
 
-void pulseEnable(byte value) {
-  pcfWrite(value | 0x04);
-  delayMicroseconds(1);
-  pcfWrite(value & ~0x04);
-  delayMicroseconds(50);
-}
+PagerAlert alertQueue[QUEUE_SIZE];
 
-void lcdWrite4Bits(byte value) {
-  pcfWrite(value);
-  pulseEnable(value);
-}
+uint8_t queueHead = 0;
+uint8_t queueTail = 0;
+uint8_t queueCount = 0;
 
-void lcdCommand(byte command) {
-  byte high = command & 0xF0;
-  byte low = (command << 4) & 0xF0;
+bool isDisplayingAlert = false;
+unsigned long alertStartTime = 0;
 
-  lcdWrite4Bits(high);
-  lcdWrite4Bits(low);
-}
+String serialBuffer = "";
 
-void lcdData(byte data) {
-  byte high = (data & 0xF0) | 0x01;
-  byte low = ((data << 4) & 0xF0) | 0x01;
-
-  lcdWrite4Bits(high);
-  lcdWrite4Bits(low);
-}
-
-void lcdPrint(const char* text) {
-  while (*text) {
-    lcdData(*text);
-    text++;
-  }
-}
-
-void lcdSetCursor(byte col, byte row) {
-  byte address;
-
-  if (row == 0) {
-    address = 0x00 + col;
-  } else {
-    address = 0x40 + col;
-  }
-
-  lcdCommand(0x80 | address);
-}
-
-void lcdInit() {
-  delay(50);
-
-  // Force LCD into 4-bit mode.
-  lcdWrite4Bits(0x30);
-  delay(5);
-
-  lcdWrite4Bits(0x30);
-  delayMicroseconds(150);
-
-  lcdWrite4Bits(0x30);
-  delayMicroseconds(150);
-
-  lcdWrite4Bits(0x20);
-  delayMicroseconds(150);
-
-  // 4-bit, 2 lines, 5x8 font
-  lcdCommand(0x28);
-
-  // Display OFF
-  lcdCommand(0x08);
-
-  // Clear display
-  lcdCommand(0x01);
-  delay(2);
-
-  // Entry mode
-  lcdCommand(0x06);
-
-  // Display ON, cursor OFF, blink OFF
-  lcdCommand(0x0C);
-}
-
-bool lcdDetected() {
-  Wire.beginTransmission(LCD_ADDR);
-  return Wire.endTransmission() == 0;
-}
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin();
 
   pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);
 
-  Serial.println();
-  Serial.println("====================");
-  Serial.println("F1 PAGER LCD TEST");
-  Serial.println("====================");
+  Wire.begin();
 
-  if (lcdDetected()) {
-    Serial.println("LCD FOUND AT 0x27");
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
 
-    tone(BUZZER_PIN, 1500, 150);
+  showStandbyScreen();
 
-    lcdInit();
+  // Startup beep so we know the Arduino has initialized.
+  tone(BUZZER_PIN, 1000, 150);
+}
 
-    lcdSetCursor(0, 0);
-    lcdPrint("F1 PAGER TEST");
 
-    lcdSetCursor(0, 1);
-    lcdPrint("LCD IS WORKING");
-  } else {
-    Serial.println("LCD NOT FOUND!");
+void loop() {
+  readSerialData();
+  manageDisplayQueue();
+}
 
-    // Five low beeps = LCD not detected
-    for (int i = 0; i < 5; i++) {
-      tone(BUZZER_PIN, 500, 100);
-      delay(150);
+
+void readSerialData() {
+  while (Serial.available() > 0) {
+    char c = Serial.read();
+
+    if (c == '\n') {
+      parseAndEnqueue(serialBuffer);
+      serialBuffer = "";
+    }
+    else if (c != '\r') {
+      serialBuffer += c;
+    }
+
+    // Prevent an accidentally huge serial message from
+    // consuming memory.
+    if (serialBuffer.length() > 100) {
+      serialBuffer = "";
     }
   }
 }
 
-void loop() {
+
+void parseAndEnqueue(String rawMessage) {
+  rawMessage.trim();
+
+  if (rawMessage.length() == 0) {
+    return;
+  }
+
+  /*
+    Expected format:
+
+    TYPE|LINE1|LINE2
+
+    Examples:
+
+    DNF|VER: DNF|RETIRED L29
+    HIGH_DEG|VER: HIGH DEG|+0.15s/lap L16
+    PIT_WINDOW|VER: PIT WINDOW|+2.10s L26
+  */
+
+  int firstPipe = rawMessage.indexOf('|');
+
+  if (firstPipe == -1) {
+    return;
+  }
+
+  int secondPipe = rawMessage.indexOf('|', firstPipe + 1);
+
+  if (secondPipe == -1) {
+    return;
+  }
+
+  // Drop the oldest message if the queue is full.
+  if (queueCount >= QUEUE_SIZE) {
+    queueHead = (queueHead + 1) % QUEUE_SIZE;
+    queueCount--;
+  }
+
+  PagerAlert alert;
+
+  String typeStr =
+    rawMessage.substring(0, firstPipe);
+
+  String line1Str =
+    rawMessage.substring(firstPipe + 1, secondPipe);
+
+  String line2Str =
+    rawMessage.substring(secondPipe + 1);
+
+  typeStr.trim();
+  line1Str.trim();
+  line2Str.trim();
+
+  // Copy event type.
+  typeStr.toCharArray(
+    alert.type,
+    sizeof(alert.type)
+  );
+
+  // Copy LCD line 1.
+  line1Str.toCharArray(
+    alert.line1,
+    sizeof(alert.line1)
+  );
+
+  // Copy LCD line 2.
+  line2Str.toCharArray(
+    alert.line2,
+    sizeof(alert.line2)
+  );
+
+  alertQueue[queueTail] = alert;
+
+  queueTail =
+    (queueTail + 1) % QUEUE_SIZE;
+
+  queueCount++;
+}
+
+
+void manageDisplayQueue() {
+  unsigned long now = millis();
+
+  // Finish currently displayed alert.
+  if (isDisplayingAlert) {
+    if (now - alertStartTime >= DISPLAY_HOLD_MS) {
+      isDisplayingAlert = false;
+
+      if (queueCount == 0) {
+        showStandbyScreen();
+      }
+    }
+  }
+
+  // Display the next queued alert.
+  if (!isDisplayingAlert && queueCount > 0) {
+    PagerAlert currentAlert =
+      alertQueue[queueHead];
+
+    queueHead =
+      (queueHead + 1) % QUEUE_SIZE;
+
+    queueCount--;
+
+    renderAlert(currentAlert);
+
+    triggerBuzzer(currentAlert.type);
+
+    alertStartTime = millis();
+    isDisplayingAlert = true;
+  }
+}
+
+
+void renderAlert(const PagerAlert& alert) {
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+  lcd.print(alert.line1);
+
+  lcd.setCursor(0, 1);
+  lcd.print(alert.line2);
+}
+
+
+void showStandbyScreen() {
+  lcd.clear();
+
+  lcd.setCursor(0, 0);
+  lcd.print("F1 PITWALL");
+
+  lcd.setCursor(0, 1);
+  lcd.print("PAGER READY");
+}
+
+
+void triggerBuzzer(const char* type) {
+
+  // DNF = highest priority.
+  if (strcmp(type, "DNF") == 0) {
+
+    tone(BUZZER_PIN, 2200, 100);
+    delay(130);
+
+    tone(BUZZER_PIN, 2200, 100);
+    delay(130);
+
+    tone(BUZZER_PIN, 2200, 100);
+  }
+
+  // Pit strategy alert.
+  else if (
+    strcmp(type, "PIT") == 0 ||
+    strcmp(type, "PIT_WINDOW") == 0
+  ) {
+
+    tone(BUZZER_PIN, 1500, 120);
+    delay(160);
+
+    tone(BUZZER_PIN, 1500, 120);
+  }
+
+  // All other strategy alerts.
+  else {
+
+    tone(BUZZER_PIN, 900, 100);
+  }
 }
