@@ -46,10 +46,7 @@ python main.py
 * Arduino UNO
 * 1602 LCD with I2C
 * Piezo buzzer
-* | Component | Pin | Arduino Uno |
-|---|---|---|
-| 16x2 LCD (I2C, address `0x27`) | VCC / GND / SDA / SCL | `5V` / `GND` / `A4` / `A5` |
-| Passive buzzer | Signal / GND | `Pin 8` / `GND` |
+
 
 ## Serial protocol
 
