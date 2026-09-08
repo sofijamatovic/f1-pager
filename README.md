@@ -46,5 +46,30 @@ python main.py
 * Arduino UNO
 * 1602 LCD with I2C
 * Piezo buzzer
+* | Component | Pin | Arduino Uno |
+|---|---|---|
+| 16x2 LCD (I2C, address `0x27`) | VCC / GND / SDA / SCL | `5V` / `GND` / `A4` / `A5` |
+| Passive buzzer | Signal / GND | `Pin 8` / `GND` |
+
+## Serial protocol
 
 The hardware interface can also be tested using Wokwi.
+Example: `HIGH_DEG|VER: HIGH DEG|+0.15s/lap L16`
+
+## Running in Wokwi
+
+Wokwi needs a **compiled** firmware, not the raw `.ino`:
+
+\`\`\`bash
+arduino-cli core install arduino:avr
+arduino-cli lib install "LiquidCrystal I2C"
+arduino-cli compile --fqbn arduino:avr:uno --output-dir build sketch.ino
+\`\`\`
+
+Then start the simulation and, in another terminal:
+
+\`\`\`bash
+python serial_bridge.py
+\`\`\`
+
+**Status:** software and Wokwi circuit simulation are working and verified. The physical build is in progress — components ordered, assembly pending delivery.
