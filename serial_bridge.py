@@ -37,7 +37,7 @@ _STOP = object()
 
 # Real hardware port. Change "COM3" to whatever port your Arduino
 # actually enumerates as (find it with: arduino-cli board list).
-SERIAL_PORT = "COM3"
+SERIAL_PORT = "COM5"
 BAUD_RATE = 115200
 
 
@@ -189,6 +189,14 @@ class SerialPagerBridge:
                     self.port,
                     self.baud_rate,
                 )
+
+                # Opening the serial port toggles DTR on most
+                # Uno-compatible boards, which resets the MCU.
+                # Give it time to finish setup() before we start
+                # writing, or the first several packets are lost
+                # while the chip is still rebooting.
+                LOGGER.info("Waiting for Arduino to finish reset...")
+                sleep(2)
 
             except Exception as exc:
 

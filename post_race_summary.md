@@ -2,16 +2,18 @@
 
 **Events logged:** 3
 
+## HAM
+
+### Dnf
+
+- Lap 10: +0.000s — driver retired from the race
+
 ## VER
-
-### High Degradation
-
-- Lap 4: +0.080s — stint degradation above baseline
 
 ### Pace Drop
 
-- Lap 5: +0.300s — rolling pace deteriorated
+- Lap 9: +0.495s — statistically significant field-relative pace loss
 
-### Pit Window
+### Pace Gain
 
-- Lap 5: +3.900s — projected degradation exceeds pit-loss trade-off
+- Lap 10: -0.490s — statistically significant field-relative pace gain
