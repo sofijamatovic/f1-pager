@@ -15,6 +15,7 @@ from __future__ import annotations
 import logging
 import queue
 import threading
+import time
 from collections.abc import Mapping
 from dataclasses import dataclass
 from time import sleep
@@ -191,12 +192,27 @@ class SerialPagerBridge:
                 )
 
                 # Opening the serial port toggles DTR on most
-                # Uno-compatible boards, which resets the MCU.
-                # Give it time to finish setup() before we start
-                # writing, or the first several packets are lost
-                # while the chip is still rebooting.
-                LOGGER.info("Waiting for Arduino to finish reset...")
-                sleep(2)
+                # Uno-compatible boards, which resets the MCU. Instead of
+                # guessing how long that takes, wait for the Arduino to
+                # actually tell us it's done (it prints "READY" at the
+                # end of setup(), after lcd.init()).
+                LOGGER.info("Waiting for Arduino READY signal...")
+                ready = False
+                deadline = time.time() + 10
+                while time.time() < deadline:
+                    line = self._serial.readline().decode(
+                        "ascii", errors="replace"
+                    ).strip()
+                    if line == "READY":
+                        ready = True
+                        break
+                if ready:
+                    LOGGER.info("Arduino signaled READY.")
+                else:
+                    LOGGER.warning(
+                        "No READY signal within 10s; proceeding anyway "
+                        "(is sketch.ino up to date with Serial.println(\"READY\")?)"
+                    )
 
             except Exception as exc:
 
